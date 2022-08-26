@@ -36,6 +36,12 @@ class PIDController(Controller):
         throttle = self.long_pid_controller.run_in_series(next_waypoint=next_waypoint,
                                                           target_speed=kwargs.get("target_speed", self.max_speed))
         steering = self.lat_pid_controller.run_in_series(next_waypoint=next_waypoint)
+        pitch = float(next_waypoint.record().split(",")[4])
+        self.pitch_difference = pitch - self.old_pitch
+        self.old_pitch = pitch
+        if self.pitch_difference < -1:
+            throttle = -1
+            brake = 1
         return VehicleControl(throttle=throttle, steering=steering)
 
     @staticmethod

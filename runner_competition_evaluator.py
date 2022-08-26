@@ -8,7 +8,7 @@ from ROAR.agent_module.pure_pursuit_agent \
 from ROAR_Sim.carla_client.carla_runner import CarlaRunner
 from typing import Tuple
 from prettytable import PrettyTable
-from ROAR.agent_module.michael_pid_agent import PIDAgent
+from ROAR.agent_module.pid_agent import PIDAgent
 
 
 def compute_score(carla_runner: CarlaRunner) -> Tuple[float, int, int]:
