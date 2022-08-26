@@ -20,6 +20,8 @@ class PIDController(Controller):
         self.max_speed = self.agent.agent_settings.max_speed
         self.throttle_boundary = throttle_boundary
         self.steering_boundary = steering_boundary
+        self.old_pitch = 0
+        self.pitch_difference = 0
         self.config = json.load(Path(agent.agent_settings.pid_config_file_path).open(mode='r'))
         self.long_pid_controller = LongPIDController(agent=agent,
                                                      throttle_boundary=throttle_boundary,
@@ -39,10 +41,11 @@ class PIDController(Controller):
         pitch = float(next_waypoint.record().split(",")[4])
         self.pitch_difference = pitch - self.old_pitch
         self.old_pitch = pitch
+        brake = 0
         if self.pitch_difference < -1:
             throttle = -1
             brake = 1
-        return VehicleControl(throttle=throttle, steering=steering)
+        return VehicleControl(throttle=throttle, steering=steering, brake=brake)
 
     @staticmethod
     def find_k_values(vehicle: Vehicle, config: dict) -> np.array:
