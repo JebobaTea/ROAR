@@ -24,6 +24,7 @@ class PIDController(Controller):
         self.steering_boundary = steering_boundary
         self.old_pitch = 0
         self.pitch_difference = 0
+        self.max_speed = 160
         self.config = json.load(Path(agent.agent_settings.pid_config_file_path).open(mode='r'))
         self.lat_pid_controller = LatPIDController(
             agent=agent,
@@ -47,119 +48,117 @@ class PIDController(Controller):
         gear = math.ceil((speed - (2*pitch)) / 60)
         brake = 0
         throttle = 1
+        override = False
 
         #Crash logging
-        f = open("C:/Users/aaron/Downloads/S1/ROAR/logs.txt", "a")
-        f.write("\nNext Waypoint: " + str(next_waypoint) + "\nSpeed: " + str(speed) + " Steering: " + str(steering) + " Error: " + str(error) + " Wide Error: " + str(wide_error) + " Sharp Error: " + str(sharp_error) + "\n")
+        #f = open("C:/Users/sethc/Roar/logs.txt", "a")
+        #f.write("\nNext Waypoint: " + str(next_waypoint) + "\nSpeed: " + str(speed) + " Steering: " + str(steering) + " Error: " + str(error) + " Wide Error: " + str(wide_error) + " Sharp Error: " + str(sharp_error) + "\n")
         #Hard speed limit
-        if speed > 160:
-            f.write("\nSpeed control")
+        if speed > self.max_speed:
+            #f.write("\nSpeed control")
             throttle = 0.7
 
         #Steering control
         if sharp_error > 0.5 and speed > 60:
-            f.write("\nSharp turn")
+            #f.write("\nSharp turn")
             throttle = -1
             brake = 1
         elif abs(steering) > 0.2 and speed > 60:
-            f.write("\nModerate Curve")
-            throttle = 0.2
+            #f.write("\nModerate Curve")
+            throttle = 0
             brake = 1
         elif abs(steering) > 0.15 and speed > 75:
-            f.write("\nLarge Curve")
+            #f.write("\nLarge Curve")
             throttle = 0.3
 
-        if self.pitch_difference < -1.5 and speed > 75:
-            f.write("\nBump")
+        if self.pitch_difference < -1 and speed > 75:
+            #f.write("\nBump")
             throttle = -1
             brake = 1
-        if self.pitch_difference > 1.5 and speed > 75:
-            f.write("\nSharp slope")
+        if self.pitch_difference > 1 and speed > 75:
+            #f.write("\nSharp slope")
             throttle = -1
             brake = 1
 
         #Special crash prevention, temporary solution - will fix later
+        #The reason there are so many quote-unquote "edge cases" is because every time I run the simulator the car crashes
+        #in a different place from before lmao
+        #If it's stupid as hell but it works, then it's not stupid
         w = str(next_waypoint)
         i = w.split("x: ")
         i = i[1].split(",")
         nextX = int(float(i[0]))
         i = i[1].split("y: ")
         nextY = int(float(i[1]))
+        if 2680 <= nextX <= 2737 and 142 <= nextY <= 144 and speed > 50:
+            #f.write("\nCollision Point 1")
+            override = True
         if 3065 <= nextX <= 3085 and 155 <= nextY <= 157 and speed > 50:
-            print("C1")
-            f.write("\nCollision Point 1")
-            brake = 1
-            throttle = -1
-        if 3560 <= nextX <= 3583 and 190 <= nextY <= 191 and speed > 50:
-            print("C1A")
-            f.write("\nCollision Point 1a")
-            brake = 1
-            throttle = -1
+            #f.write("\nCollision Point 2")
+            override = True
+        if 3540 <= nextX <= 3583 and 190 <= nextY <= 191 and speed > 50:
+            #f.write("\nCollision Point 3")
+            override = True
+        if 4280 <= nextX <= 4300 and 493 <= nextY <= 494 and speed > 50:
+            #f.write("\nCollision Point 4")
+            override = True
         if 3130 <= nextX <= 3150 and 409 <= nextY <= 410 and speed > 50:
-            print("C2")
-            f.write("\nCollision Point 2")
-            brake = 1
-            throttle = -1
+            #f.write("\nCollision Point 5")
+            override = True
         if 3130 <= nextX <= 3150 and 344 <= nextY <= 345 and speed > 50:
-            print("C2A")
-            f.write("\nCollision Point 2a")
-            brake = 1
-            throttle = -1
+            #f.write("\nCollision Point 6")
+            override = True
         if 3114 <= nextX <= 3138 and 382 <= nextY <= 383 and speed > 50:
-            print("C3")
-            f.write("\nCollision Point 3")
-            brake = 1
-            throttle = -1
+            #f.write("\nCollision Point 7")
+            override = True
         if 3440 <= nextX <= 3450 and 382 <= nextY <= 383 and speed > 50:
-            print("C3A")
-            f.write("\nCollision Point 3a")
-            brake = 1
-            throttle = -1
+            #f.write("\nCollision Point 8")
+            override = True
         if 3607 <= nextX <= 3611 and 427 <= nextY <= 432 and speed > 50:
-            print("C4")
-            f.write("\nCollision Point 4")
-            brake = 1
-            throttle = -1
+            #f.write("\nCollision Point 9")
+            override = True
         if 3900 <= nextX <= 3939 and 462 <= nextY <= 464 and speed > 50:
-            print("C5")
-            f.write("\nCollision Point 5")
-            brake = 1
-            throttle = -1
-        if 5040 <= nextX <= 5078 and 505 <= nextY <= 506 and speed > 50:
-            print("C6")
-            f.write("\nCollision Point 6")
-            brake = 1
-            throttle = -1
+            #f.write("\nCollision Point 10")
+            override = True
+        if 5030 <= nextX <= 5078 and 505 <= nextY <= 506 and speed > 50:
+            #f.write("\nCollision Point 11")
+            override = True
         if 5310 <= nextX <= 5338 and 494 <= nextY <= 495 and speed > 50:
-            print("C7")
-            f.write("\nCollision Point 7")
-            brake = 1
-            throttle = -1
+            #f.write("\nCollision Point 12")
+            override = True
         if 5220 <= nextX <= 5240 and 475 <= nextY <= 478 and speed > 50:
-            print("C8")
-            f.write("\nCollision Point 8")
-            brake = 1
-            throttle = -1
+            #f.write("\nCollision Point 13")
+            override = True
         if 5330 <= nextX <= 5360 and 454 <= nextY <= 457 and speed > 50:
-            print("C9")
-            f.write("\nCollision Point 9")
-            brake = 1
-            throttle = -1
+            #f.write("\nCollision Point 14")
+            override = True
         if 5630 <= nextX <= 5660 and 416 <= nextY <= 421 and speed > 50:
-            print("C10")
-            f.write("\nCollision Point 10")
-            brake = 1
-            throttle = -1
+            #f.write("\nCollision Point 15")
+            override = True
         if 5140 <= nextX <= 5190 and 339 <= nextY <= 346 and speed > 50:
-            print("C11")
-            f.write("\nCollision Point 11")
+            #f.write("\nCollision Point 16")
+            override = True
+        if 4270 <= nextX <= 4300 and 493 <= nextY <= 494 and speed > 50:
+            #f.write("\nCollision Point 17")
+            override = True
+        if 2735 <= nextX <= 2800 and 98 <= nextY <= 101 and speed > 50:
+            #f.write("\nCollision Point 18")
+            override = True
+
+        if override and speed > 50:
             brake = 1
             throttle = -1
+        if 2565 <= nextX <= 2590 and 104 <= nextY <= 105 and speed > 50:
+            print("Roundabout")
+            #f.write("\nRoundabout")
+            brake = 1
+            throttle = -1
+            self.max_speed = 70
 
         #Gear shifting (Totally not stolen)
         if gear == 0:
             gear += 1
-        f.close()
+        #f.close()
         return VehicleControl(throttle=throttle, steering=steering, brake=brake, manual_gear_shift=True, gear=gear)
 
     @staticmethod
